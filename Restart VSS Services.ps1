@@ -1,47 +1,26 @@
+function Restart-ServiceWithProgress {
+  param(
+    [string]$serviceName,
+    [int]$percentComplete,
+    [string]$status,
+    [bool]$force = $false
+  )
+  $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+  if ($null -ne $service) {
+    Write-Progress -Activity "Restarting Services" -Status "Restarting $status" -PercentComplete $percentComplete
+    Restart-Service -Name $serviceName -Force:$force
+  } else {
+    Write-Output "$serviceName is not found."
+  }
+}
 # Display progress message
 Write-Output "Restarting Services"
-
-# Restart COM+ service
-Write-Progress -Activity "Restarting Services" -Status "Restarting COM+" -PercentComplete 10
-Restart-Service -Name "EventSystem" -Force
-
-# Restart Cryptographic service
-Write-Progress -Activity "Restarting Services" -Status "Restarting Cryptographic" -PercentComplete 20
-Restart-Service -Name "CryptSvc"
-
-# Restart WMI service
-Write-Progress -Activity "Restarting Services" -Status "Restarting WMI" -PercentComplete 40
-Restart-Service -Name "Winmgmt" -Force
-
-# Check if SQL Server VSS Writer service exists
-$vssWriter = Get-Service -Name "SQLWriter" -ErrorAction SilentlyContinue
-# If the service exists, restart it
-if ($vssWriter -ne $null) {
-  # Display progress message
-  Write-Progress -Activity "Restarting Services" -Status "Restarting SQLWriter" -PercentComplete 50
-  Restart-Service -Name "SQLWriter"
-}
-
-# Check if NTDS service exists
-$vssWriter = Get-Service -Name "NTDS" -ErrorAction SilentlyContinue
-# If the service exists, restart it
-if ($vssWriter -ne $null) {
-  # Display progress message
-  Write-Progress -Activity "Restarting Services" -Status "Restarting Active Directory Domain Services" -PercentComplete 60
-  Restart-Service -Name "NTDS" -Force
-}
-
-# Restart Volume Shadow Copy service
-Write-Progress -Activity "Restarting Services" -Status "Restarting VSS" -PercentComplete 80
-Restart-Service -Name "VSS"
-
-# Get the "Backup Service Controller" service
-$service = Get-Service -Name "Backup Service Controller" -ErrorAction SilentlyContinue
-# Check if the service exists and is not running
-if ($service -ne $null -and $service.Status -ne "Running") {
-  Write-Progress -Activity "Restarting Services" -Status "Starting Backup Service Controller" -PercentComplete 90
-  Restart-Service -Name "Backup Service Controller"
-}
-
+Restart-ServiceWithProgress -serviceName "EventSystem" -percentComplete 10 -status "COM+" -force:$true
+Restart-ServiceWithProgress -serviceName "CryptSvc" -percentComplete 20 -status "Cryptographic"
+Restart-ServiceWithProgress -serviceName "Winmgmt" -percentComplete 40 -status "WMI" -force:$true
+Restart-ServiceWithProgress -serviceName "SQLWriter" -percentComplete 50 -status "SQLWriter"
+Restart-ServiceWithProgress -serviceName "NTDS" -percentComplete 60 -status "Active Directory Domain Services" -force:$true
+Restart-ServiceWithProgress -serviceName "VSS" -percentComplete 80 -status "VSS"
+Restart-ServiceWithProgress -serviceName "Backup Service Controller" -percentComplete 90 -status "Starting Backup Service Controller"
 Write-Progress -Activity "Restarting Services" -Status "Completed" -PercentComplete 100
 Write-Output "Completed"
